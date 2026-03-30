@@ -1,14 +1,17 @@
 'use client'
 
+import z from 'zod'
 import {
   useAgent,
   CopilotSidebar,
   useFrontendTool,
   useComponent,
+  useHumanInTheLoop,
+  ToolCallStatus,
 } from '@copilotkit/react-core/v2'
 import { CopilotKitCSSProperties } from '@copilotkit/react-ui'
 import { useState } from 'react'
-import z from 'zod'
+import { selectLocalFile } from '@/app/utils'
 
 export default function CopilotKitPage() {
   const [themeColor, setThemeColor] = useState('#6366f1')
@@ -23,6 +26,66 @@ export default function CopilotKitPage() {
     }),
     handler: async ({ themeColor }) => {
       setThemeColor(themeColor)
+    },
+  })
+
+  useHumanInTheLoop({
+    name: 'getLocalImageFromUser',
+    description:
+      'Ask user to select confirmed count local images, upload and then return remote urls. Make sure to know the real count before call this',
+    parameters: z.object({
+      count: z.number().describe('count of image'),
+    }),
+    render: params => {
+      if (params.status === ToolCallStatus.Executing) {
+        const inputCount = params.args.count
+
+        const handleSelectFile = () => {
+          selectLocalFile({
+            accept: 'image/*',
+            multiple: inputCount > 1 ? true : false,
+          })
+            .then(fileList => {
+              params.respond(
+                [...fileList]
+                  .slice(0, inputCount)
+                  .map(file => URL.createObjectURL(file)),
+              )
+            })
+            .catch()
+        }
+        return (
+          <div className="bg-red-200 p-5">
+            <button
+              onClick={handleSelectFile}
+              className="cursor-pointer border">
+              点击上传照片
+            </button>
+          </div>
+        )
+      } else if (params.status === ToolCallStatus.Complete) {
+        const result = JSON.parse(params.result) as string[]
+        const len = result.length
+        return (
+          <div className="bg-purple-200 p-5">
+            You've picked {result.length} image{result.length > 1 ? 's' : ''}
+          </div>
+        )
+      }
+    },
+  })
+
+  useComponent({
+    name: 'showImage',
+    description: 'Display one image by url.',
+    parameters: z.object({
+      url: z.string().describe('图片url'),
+    }),
+    render: ({ url }) => {
+      console.log(url)
+      return (
+        <img src={url} className="max-h-80 rounded-2xl border shadow"></img>
+      )
     },
   })
 
