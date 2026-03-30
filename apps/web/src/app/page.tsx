@@ -1,24 +1,27 @@
 'use client'
 
-import { useCoAgent, useCopilotAction } from '@copilotkit/react-core'
-import { CopilotKitCSSProperties, CopilotSidebar } from '@copilotkit/react-ui'
+import {
+  useAgent,
+  CopilotSidebar,
+  useFrontendTool,
+  useComponent,
+} from '@copilotkit/react-core/v2'
+import { CopilotKitCSSProperties } from '@copilotkit/react-ui'
 import { useState } from 'react'
+import z from 'zod'
 
 export default function CopilotKitPage() {
   const [themeColor, setThemeColor] = useState('#6366f1')
 
-  // 🪁 Frontend Actions: https://docs.copilotkit.ai/guides/frontend-actions
-  useCopilotAction({
+  useFrontendTool({
     name: 'setThemeColor',
     description: 'Set the theme color of the page.',
-    parameters: [
-      {
-        name: 'themeColor',
-        description: 'The theme color to set. Make sure to pick nice colors.',
-        required: true,
-      },
-    ],
-    handler({ themeColor }) {
+    parameters: z.object({
+      themeColor: z
+        .string()
+        .describe('The theme color to set. Make sure to pick nice colors.'),
+    }),
+    handler: async ({ themeColor }) => {
       setThemeColor(themeColor)
     },
   })
@@ -29,65 +32,45 @@ export default function CopilotKitPage() {
         { '--copilot-kit-primary-color': themeColor } as CopilotKitCSSProperties
       }>
       <YourMainContent themeColor={themeColor} />
-      <CopilotSidebar
-        clickOutsideToClose={false}
-        defaultOpen={true}
-        labels={{
-          title: 'Popup Assistant',
-          initial:
-            '👋 Hi, there! You\'re chatting with an agent. This agent comes with a few tools to get you started.\n\nFor example you can try:\n- **Frontend Tools**: "Set the theme to orange"\n- **Shared State**: "Write a proverb about AI"\n- **Generative UI**: "Get the weather in SF"\n\nAs you interact with the agent, you\'ll see the UI update in real-time to reflect the agent\'s **state**, **tool calls**, and **progress**.',
-        }}
-      />
+
+      <CopilotSidebar defaultOpen={true} labels={{}} />
     </main>
   )
 }
 
-// State of the agent, make sure this aligns with your agent's state.
-type AgentState = {
-  proverbs: string[]
-}
-
 function YourMainContent({ themeColor }: { themeColor: string }) {
-  // 🪁 Shared State: https://docs.copilotkit.ai/coagents/shared-state
-  const { state, setState } = useCoAgent<AgentState>({
-    name: 'starterAgent',
-    initialState: {
-      proverbs: [
-        'CopilotKit may be new, but its the best thing since sliced bread.',
-      ],
-    },
+  const { agent } = useAgent({
+    agentId: 'starterAgent',
   })
 
-  // 🪁 Frontend Actions: https://docs.copilotkit.ai/coagents/frontend-actions
-  useCopilotAction(
+  useFrontendTool(
     {
       name: 'addProverb',
       description: 'Add a proverb to the list.',
-      parameters: [
-        {
-          name: 'proverb',
-          description: 'The proverb to add. Make it witty, short and concise.',
-          required: true,
-        },
-      ],
-      handler: ({ proverb }) => {
-        setState(prevState => ({
-          ...prevState,
-          proverbs: [...(prevState?.proverbs || []), proverb],
-        }))
+      parameters: z.object({
+        proverb: z
+          .string()
+          .describe('The proverb to add. Make it witty, short and concise.'),
+      }),
+
+      handler: async ({ proverb }) => {
+        agent.setState({
+          ...agent.state,
+          proverbs: [...(agent.state.proverbs || []), proverb],
+        })
       },
     },
-    [setState],
+    [agent],
   )
 
-  //🪁 Generative UI: https://docs.copilotkit.ai/coagents/generative-ui
-  useCopilotAction({
-    name: 'getWeather',
-    description: 'Get the weather for a given location.',
-    available: 'disabled',
-    parameters: [{ name: 'location', type: 'string', required: true }],
-    render: ({ args }) => {
-      return <WeatherCard location={args.location} themeColor={themeColor} />
+  useComponent({
+    name: 'showWeather',
+    description: 'Display a weather card for a city.',
+    parameters: z.object({
+      location: z.string(),
+    }),
+    render: ({ location }) => {
+      return <WeatherCard location={location} themeColor={themeColor} />
     },
   })
 
@@ -104,16 +87,18 @@ function YourMainContent({ themeColor }: { themeColor: string }) {
         </p>
         <hr className="my-6 border-white/20" />
         <div className="flex flex-col gap-3">
-          {state.proverbs?.map((proverb, index) => (
+          {(agent.state.proverbs as any[])?.map((proverb, index) => (
             <div
               key={index}
               className="group relative rounded-xl bg-white/15 p-4 text-white transition-all hover:bg-white/20">
               <p className="pr-8">{proverb}</p>
               <button
                 onClick={() =>
-                  setState({
-                    ...state,
-                    proverbs: state.proverbs?.filter((_, i) => i !== index),
+                  agent.setState({
+                    ...agent.state,
+                    proverbs: (agent.state.proverbs as any[])?.filter(
+                      (_, i) => i !== index,
+                    ),
                   })
                 }
                 className="absolute top-3 right-3 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-red-600">
@@ -122,7 +107,7 @@ function YourMainContent({ themeColor }: { themeColor: string }) {
             </div>
           ))}
         </div>
-        {state.proverbs?.length === 0 && (
+        {agent.state.proverbs?.length === 0 && (
           <p className="my-8 text-center text-white/80 italic">
             No proverbs yet. Ask the assistant to add some!
           </p>
