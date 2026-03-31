@@ -8,9 +8,11 @@ import {
   useComponent,
   useHumanInTheLoop,
   ToolCallStatus,
+  useRenderTool,
 } from '@copilotkit/react-core/v2'
 import { CSSProperties, useState } from 'react'
 import { selectLocalFile } from '@/app/utils'
+import { IcBaselineDone, SvgSpinners90RingWithBg } from '@/icons'
 
 export default function CopilotKitPage() {
   const [themeColor, setThemeColor] = useState('#6366f1')
@@ -25,6 +27,37 @@ export default function CopilotKitPage() {
     }),
     handler: async ({ themeColor }) => {
       setThemeColor(themeColor)
+    },
+  })
+
+  useFrontendTool({
+    name: 'getUserDeviceInfo',
+    description: 'Get device info of user.',
+    handler: async () => {
+      await new Promise(r => setTimeout(r, 5e3))
+      return navigator.userAgent
+    },
+  })
+
+  useRenderTool({
+    name: 'getUserDeviceInfo',
+    parameters: z.undefined(),
+    render: props => {
+      if (props.status === 'complete') {
+        return (
+          <div className="flex gap-2 text-sm text-black/60">
+            <IcBaselineDone className="mt-0.5 size-4 shrink-0" /> Device info:{' '}
+            {props.result}
+          </div>
+        )
+      } else {
+        return (
+          <div className="flex gap-2 text-sm text-black/60">
+            <SvgSpinners90RingWithBg className="mt-0.5 size-4 shrink-0" />
+            Getting device info...
+          </div>
+        )
+      }
     },
   })
 
