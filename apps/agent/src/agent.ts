@@ -13,6 +13,7 @@ import { ChatDeepSeek } from '@langchain/deepseek'
 import {
   convertActionsToDynamicStructuredTools,
   CopilotKitStateAnnotation,
+  // @ts-ignore
 } from '@copilotkit/sdk-js/langgraph'
 import { Annotation } from '@langchain/langgraph'
 
@@ -91,7 +92,10 @@ function shouldContinue({ messages, copilotkit }: AgentState) {
     const toolCallName = lastMessage.tool_calls![0].name
 
     // 7.3 Only route to the tool node if the tool call is not a CopilotKit action
-    if (!actions || actions.every(action => action.name !== toolCallName)) {
+    if (
+      !actions ||
+      actions.every((action: any) => action.name !== toolCallName)
+    ) {
       return 'tool_node'
     }
   }

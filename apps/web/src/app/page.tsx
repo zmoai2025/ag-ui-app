@@ -9,8 +9,7 @@ import {
   useHumanInTheLoop,
   ToolCallStatus,
 } from '@copilotkit/react-core/v2'
-import { CopilotKitCSSProperties } from '@copilotkit/react-ui'
-import { useState } from 'react'
+import { CSSProperties, useState } from 'react'
 import { selectLocalFile } from '@/app/utils'
 
 export default function CopilotKitPage() {
@@ -91,9 +90,7 @@ export default function CopilotKitPage() {
 
   return (
     <main
-      style={
-        { '--copilot-kit-primary-color': themeColor } as CopilotKitCSSProperties
-      }>
+      style={{ '--copilot-kit-primary-color': themeColor } as CSSProperties}>
       <YourMainContent themeColor={themeColor} />
 
       <CopilotSidebar defaultOpen={true} labels={{}} />
