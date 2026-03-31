@@ -34,7 +34,7 @@ pnpm install
 
 ```bash
 cd apps/agent
-echo "OPENAI_API_KEY=your-openai-api-key-here" > .env
+echo "DEEPSEEK_API_KEY=your-deepseek-api-key-here" > .env
 ```
 
 3. Start the development servers:
@@ -83,9 +83,11 @@ The LangGraph agent code is in `apps/agent/src/`.
 
 ## 📚 Documentation
 
+- [AG-UI Documentation](https://docs.ag-ui.com) - Learn more about AG-UI
 - [CopilotKit Documentation](https://docs.copilotkit.ai) - Explore CopilotKit's capabilities
 - [LangGraph Documentation](https://langchain-ai.github.io/langgraph/) - Learn more about LangGraph and its features
 - [Next.js Documentation](https://nextjs.org/docs) - Learn about Next.js features and API
+- [A2UI Documentation](https://a2ui.org) - Learn more about A2UI
 
 ## Contributing
 
@@ -102,5 +104,5 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 If you see "I'm having trouble connecting to my tools", make sure:
 
 1. The LangGraph agent is running on port 8000
-2. Your OpenAI API key is set correctly
+2. Your DEEPSEEK API key is set correctly
 3. Both servers started successfully
